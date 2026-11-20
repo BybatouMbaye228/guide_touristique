@@ -1,0 +1,12 @@
+<header>
+  <h1>{{ titre }}</h1>
+  <nav aria-label="Navigation principale">
+    <a routerLink="/guides" routerLinkActive="actif"
+       [routerLinkActiveOptions]="{ exact: true }">Liste des guides</a>
+    <a routerLink="/guides/nouveau" routerLinkActive="actif">Ajouter un guide</a>
+  </nav>
+</header>
+
+<main>
+  <router-outlet />
+</main>
