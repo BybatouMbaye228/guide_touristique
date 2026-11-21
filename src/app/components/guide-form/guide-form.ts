@@ -1,9 +1,114 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { GuideTouristique } from '../../models/guide-touristique';
+import { GuideTouristiqueService } from '../../services/guide-touristique.service';
 
 @Component({
-  imports: [],
+  imports: [ReactiveFormsModule, RouterLink],
   selector: 'app-guide-form',
   styleUrl: './guide-form.css',
   templateUrl: './guide-form.html',
 })
-export class GuideForm {}
+export class GuideForm {
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly service = inject(GuideTouristiqueService);
+
+  // null = ajout ; un nombre = modification du guide portant ce numéro
+  private readonly guideId: number | null = this.lireId();
+  readonly modeModification = this.guideId !== null;
+  readonly introuvable = signal(false);
+
+  readonly regions = [
+    'Dakar', 'Diourbel', 'Fatick', 'Kaffrine', 'Kaolack', 'Kédougou', 'Kolda',
+    'Louga', 'Matam', 'Saint-Louis', 'Sédhiou', 'Tambacounda', 'Thiès', 'Ziguinchor',
+  ];
+
+  form = this.fb.nonNullable.group({
+    prenom: ['', [Validators.required, Validators.minLength(2)]],
+    nom: ['', [Validators.required, Validators.minLength(2)]],
+    region: ['', Validators.required],
+    email: ['', [Validators.required, Validators.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/)]],
+    telephone: ['', [Validators.required, Validators.pattern(/^(\+221\s?)?(7[05678]|3[03])(\s?\d){7}$/)]],
+    langues: ['', Validators.required],
+    specialites: ['', [Validators.required, Validators.minLength(3)]],
+    note: [0, [Validators.required, Validators.min(0), Validators.max(5)]],
+    actif: [true],
+  });
+
+  messageSucces = signal('');
+  messageErreur = signal('');
+
+  constructor() {
+    if (this.guideId !== null) {
+      const guide = Number.isNaN(this.guideId) ? undefined : this.service.getById(this.guideId);
+      if (guide) {
+        // Pré-remplissage : les langues passent de liste à texte "Français, Wolof"
+        this.form.patchValue({ ...guide, langues: guide.langues.join(', ') });
+      } else {
+        this.introuvable.set(true);
+      }
+    }
+  }
+
+  private lireId(): number | null {
+    const brut = this.route.snapshot.paramMap.get('id');
+    return brut === null ? null : Number(brut);
+  }
+
+  erreur(champ: string): string {
+    const c = this.form.get(champ);
+    if (!c || !c.touched || !c.errors) {
+      return '';
+    }
+    if (c.errors['required']) {
+      return 'Ce champ est obligatoire.';
+    }
+    if (c.errors['minlength']) {
+      return `Saisissez au moins ${c.errors['minlength'].requiredLength} caractères.`;
+    }
+    if (c.errors['min'] || c.errors['max']) {
+      return 'La note doit être comprise entre 0 et 5.';
+    }
+    if (c.errors['pattern']) {
+      return champ === 'email'
+        ? 'Adresse e-mail invalide. Exemple : nom@exemple.com'
+        : 'Numéro invalide. Exemple : 77 123 45 67 ou +221 77 123 45 67';
+    }
+    return 'Valeur invalide.';
+  }
+
+  enregistrer(): void {
+    this.messageSucces.set('');
+    this.messageErreur.set('');
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.messageErreur.set('Le formulaire contient des erreurs. Corrigez les champs signalés.');
+      return;
+    }
+
+    const v = this.form.getRawValue();
+    const donnees: Omit<GuideTouristique, 'id'> = {
+      prenom: v.prenom.trim(),
+      nom: v.nom.trim(),
+      region: v.region,
+      email: v.email.trim(),
+      telephone: v.telephone.trim(),
+      langues: v.langues.split(',').map(l => l.trim()).filter(l => l.length > 0),
+      specialites: v.specialites.trim(),
+      note: v.note,
+      actif: v.actif,
+    };
+
+    if (this.guideId !== null) {
+      this.service.update({ id: this.guideId, ...donnees });
+      this.messageSucces.set(`Le guide ${donnees.prenom} ${donnees.nom} a été modifié avec succès.`);
+    } else {
+      this.service.add(donnees);
+      this.messageSucces.set(`Le guide ${donnees.prenom} ${donnees.nom} a été ajouté avec succès.`);
+      this.form.reset();
+    }
+  }
+}
