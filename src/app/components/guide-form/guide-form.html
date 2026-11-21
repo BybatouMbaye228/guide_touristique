@@ -1,5 +1,9 @@
-<h2>Ajouter un guide</h2>
+<h2>{{ modeModification ? 'Modifier un guide' : 'Ajouter un guide' }}</h2>
 
+@if (introuvable()) {
+  <p class="message echec" role="alert">Ce guide n'existe pas.</p>
+  <a routerLink="/guides">Retour à la liste</a>
+}
 @if (messageSucces()) {
   <p class="message succes" role="status">{{ messageSucces() }}</p>
 }
@@ -7,7 +11,7 @@
   <p class="message echec" role="alert">{{ messageErreur() }}</p>
 }
 
-<form [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+<form [formGroup]="form" (ngSubmit)="enregistrer()" [hidden]="introuvable()" novalidate>
   <div class="champ">
     <label for="prenom">Prénom *</label>
     <input id="prenom" formControlName="prenom" autocomplete="off"
@@ -77,5 +81,6 @@
     <label for="actif">Guide actif (disponible)</label>
   </div>
 
-  <button type="submit">Enregistrer</button>
+  <button type="submit">{{ modeModification ? 'Enregistrer les modifications' : 'Enregistrer' }}</button>
+  <a routerLink="/guides" class="retour">Retour à la liste</a>
 </form>

@@ -1,15 +1,24 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { GuideTouristique } from '../../models/guide-touristique';
+import { GuideTouristiqueService } from '../../services/guide-touristique.service';
 
 @Component({
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   selector: 'app-guide-form',
   styleUrl: './guide-form.css',
   templateUrl: './guide-form.html',
 })
 export class GuideForm {
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly service = inject(GuideTouristiqueService);
+
+  // null = ajout ; un nombre = modification du guide portant ce numéro
+  private readonly guideId: number | null = this.lireId();
+  readonly modeModification = this.guideId !== null;
+  readonly introuvable = signal(false);
 
   readonly regions = [
     'Dakar', 'Diourbel', 'Fatick', 'Kaffrine', 'Kaolack', 'Kédougou', 'Kolda',
@@ -31,7 +40,23 @@ export class GuideForm {
   messageSucces = signal('');
   messageErreur = signal('');
 
-  // Renvoie le message d'erreur d'un champ (ou '' s'il n'y a rien à afficher)
+  constructor() {
+    if (this.guideId !== null) {
+      const guide = Number.isNaN(this.guideId) ? undefined : this.service.getById(this.guideId);
+      if (guide) {
+        // Pré-remplissage : les langues passent de liste à texte "Français, Wolof"
+        this.form.patchValue({ ...guide, langues: guide.langues.join(', ') });
+      } else {
+        this.introuvable.set(true);
+      }
+    }
+  }
+
+  private lireId(): number | null {
+    const brut = this.route.snapshot.paramMap.get('id');
+    return brut === null ? null : Number(brut);
+  }
+
   erreur(champ: string): string {
     const c = this.form.get(champ);
     if (!c || !c.touched || !c.errors) {
@@ -65,7 +90,7 @@ export class GuideForm {
     }
 
     const v = this.form.getRawValue();
-    const guide: Omit<GuideTouristique, 'id'> = {
+    const donnees: Omit<GuideTouristique, 'id'> = {
       prenom: v.prenom.trim(),
       nom: v.nom.trim(),
       region: v.region,
@@ -77,10 +102,13 @@ export class GuideForm {
       actif: v.actif,
     };
 
-    // Temporaire : l'enregistrement réel viendra quand le service sera écrit
-    console.log('Guide à enregistrer :', guide);
-
-    this.messageSucces.set(`Le guide ${guide.prenom} ${guide.nom} a été ajouté avec succès.`);
-    this.form.reset();
+    if (this.guideId !== null) {
+      this.service.update({ id: this.guideId, ...donnees });
+      this.messageSucces.set(`Le guide ${donnees.prenom} ${donnees.nom} a été modifié avec succès.`);
+    } else {
+      this.service.add(donnees);
+      this.messageSucces.set(`Le guide ${donnees.prenom} ${donnees.nom} a été ajouté avec succès.`);
+      this.form.reset();
+    }
   }
 }
