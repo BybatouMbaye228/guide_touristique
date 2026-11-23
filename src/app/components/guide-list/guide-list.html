@@ -1,1 +1,50 @@
-<p>guide-list works!</p>
+<section class="liste">
+  <header class="entete">
+    <h1>Répertoire des guides touristiques</h1>
+    <!-- TODO Membre 2 (plus tard) : bouton « Ajouter un guide » -->
+  </header>
+
+  <form class="filtres" (submit)="$event.preventDefault()" role="search">
+    <div class="champ">
+      <label for="recherche">Rechercher</label>
+      <input
+        id="recherche"
+        type="search"
+        placeholder="Nom, prénom ou spécialité"
+        [value]="recherche()"
+        (input)="surRecherche($event)"
+        aria-label="Rechercher un guide par nom, prénom ou spécialité" />
+    </div>
+    <!-- TODO Membre 1 : filtres région et statut ici -->
+  </form>
+
+  <p class="compteur" aria-live="polite">
+    {{ guidesFiltres().length }} guide(s) affiché(s) sur {{ guides().length }}
+  </p>
+
+  <div class="cartes">
+    @for (guide of guidesFiltres(); track guide.id) {
+      <article class="carte">
+        <h2>{{ guide.prenom }} {{ guide.nom }}</h2>
+        <p><strong>Région :</strong> {{ guide.region }}</p>
+        <p><strong>Spécialités :</strong> {{ guide.specialites }}</p>
+        <p><strong>Langues :</strong> {{ guide.langues.join(', ') }}</p>
+        <!-- TODO Membre 1 : note avec pipe number et badge de statut -->
+        <p><strong>Note :</strong> {{ guide.note }} / 5</p>
+        <p><strong>Statut :</strong> {{ guide.actif ? 'Actif' : 'Inactif' }}</p>
+        <p><strong>E-mail :</strong> {{ guide.email }}</p>
+        <p><strong>Téléphone :</strong> {{ guide.telephone }}</p>
+        <!-- TODO Membre 2 (plus tard) : boutons Modifier / Supprimer -->
+      </article>
+    } @empty {
+      <div class="vide">
+        @if (recherche().trim() !== '') {
+          <p>Aucun guide ne correspond à « {{ recherche() }} ».</p>
+          <button type="button" class="bouton" (click)="reinitialiserRecherche()">Effacer la recherche</button>
+        } @else {
+          <p>Aucun guide enregistré pour le moment.</p>
+        }
+      </div>
+    }
+  </div>
+</section>
