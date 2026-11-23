@@ -1,8 +1,14 @@
 <section class="liste">
   <header class="entete">
     <h1>Répertoire des guides touristiques</h1>
-    <!-- TODO Membre 2 (plus tard) : bouton « Ajouter un guide » -->
+    <a routerLink="/guides/nouveau" class="bouton bouton-principal">+ Ajouter un guide</a>
   </header>
+
+  @if (message()) {
+    <p class="alerte" [class.alerte-erreur]="messageErreur()" role="status">
+      {{ message() }}
+    </p>
+  }
 
   <form class="filtres" (submit)="$event.preventDefault()" role="search">
     <div class="champ">
@@ -12,10 +18,29 @@
         type="search"
         placeholder="Nom, prénom ou spécialité"
         [value]="recherche()"
-        (input)="surRecherche($event)"
-        aria-label="Rechercher un guide par nom, prénom ou spécialité" />
+        (input)="surRecherche($event)" />
     </div>
-    <!-- TODO Membre 1 : filtres région et statut ici -->
+
+    <div class="champ">
+      <label for="region">Région</label>
+      <select id="region" (change)="surRegion($event)">
+        <option value="" [selected]="regionChoisie() === ''">Toutes les régions</option>
+        @for (r of regions(); track r) {
+          <option [value]="r" [selected]="r === regionChoisie()">{{ r }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="champ">
+      <label for="statut">Statut</label>
+      <select id="statut" (change)="surStatut($event)">
+        <option value="" [selected]="statutChoisi() === ''">Tous</option>
+        <option value="actif" [selected]="statutChoisi() === 'actif'">Actif</option>
+        <option value="inactif" [selected]="statutChoisi() === 'inactif'">Inactif</option>
+      </select>
+    </div>
+
+    <button type="button" class="bouton" (click)="reinitialiserFiltres()">Réinitialiser</button>
   </form>
 
   <p class="compteur" aria-live="polite">
@@ -25,24 +50,35 @@
   <div class="cartes">
     @for (guide of guidesFiltres(); track guide.id) {
       <article class="carte">
-        <h2>{{ guide.prenom }} {{ guide.nom }}</h2>
+        <div class="carte-haut">
+          <h2>{{ guide.prenom }} {{ guide.nom }}</h2>
+          <span class="badge" [class.badge-actif]="guide.actif" [class.badge-inactif]="!guide.actif">
+            {{ guide.actif ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
         <p><strong>Région :</strong> {{ guide.region }}</p>
         <p><strong>Spécialités :</strong> {{ guide.specialites }}</p>
         <p><strong>Langues :</strong> {{ guide.langues.join(', ') }}</p>
-        <!-- TODO Membre 1 : note avec pipe number et badge de statut -->
-        <p><strong>Note :</strong> {{ guide.note }} / 5</p>
-        <p><strong>Statut :</strong> {{ guide.actif ? 'Actif' : 'Inactif' }}</p>
+        <p><strong>Note :</strong> {{ guide.note | number:'1.1-1' }} / 5</p>
         <p><strong>E-mail :</strong> {{ guide.email }}</p>
         <p><strong>Téléphone :</strong> {{ guide.telephone }}</p>
-        <!-- TODO Membre 2 (plus tard) : boutons Modifier / Supprimer -->
+
+        <div class="actions">
+          <a class="bouton" [routerLink]="['/guides', guide.id, 'modifier']"
+             [attr.aria-label]="'Modifier ' + guide.prenom + ' ' + guide.nom">Modifier</a>
+          <button type="button" class="bouton bouton-danger" (click)="supprimer(guide)"
+                  [attr.aria-label]="'Supprimer ' + guide.prenom + ' ' + guide.nom">Supprimer</button>
+        </div>
       </article>
     } @empty {
       <div class="vide">
-        @if (recherche().trim() !== '') {
-          <p>Aucun guide ne correspond à « {{ recherche() }} ».</p>
-          <button type="button" class="bouton" (click)="reinitialiserRecherche()">Effacer la recherche</button>
+        @if (filtreActif()) {
+          <p>Aucun guide ne correspond à votre recherche ou à vos filtres.</p>
+          <button type="button" class="bouton" (click)="reinitialiserFiltres()">Effacer les filtres</button>
         } @else {
           <p>Aucun guide enregistré pour le moment.</p>
+          <a routerLink="/guides/nouveau" class="bouton bouton-principal">Ajouter le premier guide</a>
         }
       </div>
     }
