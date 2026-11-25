@@ -5,9 +5,9 @@ Projet d'évaluation finale du cours Développement front-end (Licence 2 Ingéni
 Toutes les données sont fictives.
 
 ## Équipe
-- Membre 1 : NOM Prénom (fondations, service, routes, documentation)
-- Membre 2 : NOM Prénom (liste, recherche, filtres)
-- Membre 3 : NOM Prénom (formulaire, validations, styles)
+- Membre 1 : ABY MBAYE (fondations, service, routes, documentation)
+- Membre 2 : BINETOU MBACKE (liste, recherche, filtres)
+- Membre 3 : FANTA SAKANOKO (formulaire, validations, styles)
 
 ## Prérequis
 - Node.js (version LTS) : https://nodejs.org
