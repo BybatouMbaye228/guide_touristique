@@ -1,9 +1,12 @@
-<header>
+<header class="entete">
   <h1>{{ titre }}</h1>
-  <nav aria-label="Navigation principale">
+  <nav class="menu" aria-label="Navigation principale">
+    <a routerLink="/" routerLinkActive="actif"
+       [routerLinkActiveOptions]="{ exact: true }">Accueil</a>
     <a routerLink="/guides" routerLinkActive="actif"
        [routerLinkActiveOptions]="{ exact: true }">Liste des guides</a>
-    <a routerLink="/guides/nouveau" routerLinkActive="actif">Ajouter un guide</a>
+    <a routerLink="/guides/nouveau" routerLinkActive="actif"
+       [routerLinkActiveOptions]="{ exact: true }">Ajouter un guide</a>
   </nav>
 </header>
 
