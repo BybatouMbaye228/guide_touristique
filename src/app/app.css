@@ -44,3 +44,10 @@ main {
   margin: 1.5rem auto;
   padding: 0 1rem;
 }
+.fond-guides {
+  padding: 1.5rem 1rem;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.82)),
+    url('/images/fond-mangrove.jpeg') center / cover no-repeat;
+}
